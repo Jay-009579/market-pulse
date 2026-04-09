@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Market Pulse">
+<meta name="theme-color" content="#0a0a0f">
+<title>Market Pulse</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%236366f1' width='100' height='100' rx='22'/><text x='50' y='68' text-anchor='middle' font-size='52'>⚡</text></svg>">
+<link rel="manifest" href="manifest.json">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --card-bg: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text-primary: #e8e8ed;
+    --text-secondary: #8b8b9e;
+    --text-muted: #555568;
+    --accent: #6366f1;
+    --accent-glow: rgba(99,102,241,0.15);
+    --tag-bg: rgba(99,102,241,0.12);
+    --tag-color: #818cf8;
+    --ticker-bg: rgba(255,255,255,0.06);
+    --ticker-color: #a5a5be;
+    --section-title: #6b6b80;
+    --input-bg: rgba(255,255,255,0.06);
+    --overlay-bg: rgba(10,10,15,0.97);
+    --positive: #22c55e;
+    --negative: #ef4444;
+    --neutral: #94a3b8;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { display: none; }
+
+  /* Animations */
+  @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.5 } }
+  @keyframes glow { 0%,100% { box-shadow:0 0 20px var(--accent-glow) } 50% { box-shadow:0 0 40px var(--accent-glow) } }
+  @keyframes spin { to { transform:rotate(360deg) } }
+
+  .animate-in { animation: slideUp .4s ease both; }
+  .delay-1 { animation-delay: .06s }
+  .delay-2 { animation-delay: .12s }
+  .delay-3 { animation-delay: .18s }
+  .delay-4 { animation-delay: .24s }
+  .delay-5 { animation-delay: .30s }
+
+  /* App Shell */
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    padding: calc(var(--safe-top) + 16px) 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .header-brand { font-size:10px; font-weight:700; letter-spacing:3px; color:var(--accent); margin-bottom:4px }
+  .header-title { font-size:22px; font-weight:900; line-height:1.3 }
+  .btn-icon {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+
+  /* Date pills */
+  .date-bar { padding:16px 20px; display:flex; gap:8px; overflow-x:auto }
+  .date-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .date-pill.active {
+    font-weight: 700;
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    animation: glow 2s infinite;
+  }
+
+  /* Time badge */
+  .time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin: 0 20px 16px;
+  }
+  .time-badge .dot { color: var(--accent) }
+
+  /* Section */
+  .section { margin-bottom: 28px; padding: 0 20px }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--section-title);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-emoji { font-size: 16px }
+
+  /* News Card */
+  .news-card {
+    padding: 16px 20px;
+    border-left: 3px solid var(--neutral);
+    background: var(--card-bg);
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    transition: all .2s;
+    margin-bottom: 10px;
+  }
+  .news-card.positive { border-left-color: var(--positive) }
+  .news-card.negative { border-left-color: var(--negative) }
+  .news-card:active { transform: scale(.98); opacity:.9 }
+
+  .card-meta { display:flex; align-items:center; gap:8px; margin-bottom:6px }
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    letter-spacing: .5px;
+  }
+  .impact-icon { font-size:13px; font-weight:700 }
+  .impact-icon.positive { color: var(--positive) }
+  .impact-icon.negative { color: var(--negative) }
+  .impact-icon.neutral { color: var(--neutral) }
+
+  .card-title { font-size:14px; font-weight:600; line-height:1.5 }
+  .card-detail { margin-top:10px; font-size:13px; color:var(--text-secondary); line-height:1.7; display:none }
+  .card-detail.open { display:block; animation: fadeIn .3s ease }
+
+  .ticker-list { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap }
+  .ticker {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--ticker-bg);
+    color: var(--ticker-color);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--overlay-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 calc(var(--safe-bottom) + 8px);
+    z-index: 40;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: inherit;
+  }
+  .nav-btn.active { color: var(--accent) }
+  .nav-btn-icon { font-size: 20px }
+  .nav-btn-label { font-size: 10px; font-weight: 600 }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 76px);
+    right: calc(50% - 210px);
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(99,102,241,.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    animation: glow 3s infinite;
+    transition: transform .2s;
+  }
+  .fab:active { transform: scale(.9) }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    animation: fadeIn .25s ease;
+  }
+  .modal.open { display: flex }
+  .modal-header {
+    padding: calc(var(--safe-top) + 12px) 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-back {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .modal-body { flex:1; overflow:auto; padding:20px; padding-bottom:calc(var(--safe-bottom) + 20px) }
+
+  /* Search */
+  .search-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+  }
+  .search-input::placeholder { color: var(--text-muted) }
+  .search-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .search-btn:disabled { opacity:.6 }
+
+  .search-empty { text-align:center; margin-top:60px; color:var(--text-muted) }
+  .search-empty-icon { font-size:48px; margin-bottom:16px; opacity:.4 }
+  .search-empty p { font-size:14px; line-height:1.8 }
+
+  .suggestion-chips { margin-top:24px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center }
+  .chip {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .chip:active { background: var(--accent); color:#fff }
+
+  .result-box {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    animation: slideUp .3s ease;
+  }
+  .result-label { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:12px; color:var(--accent); font-weight:700 }
+  .result-text { font-size:13.5px; line-height:1.9; white-space:pre-wrap }
+  .loading-text { text-align:center; margin-top:60px; font-size:14px; color:var(--text-secondary); animation:pulse 1.5s infinite }
+
+  /* Settings */
+  .settings-group { margin-bottom:28px }
+  .settings-label { font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:1px; margin-bottom:12px }
+  .time-input {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 16px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    width: 100%;
+    color-scheme: dark;
+  }
+  .settings-hint { font-size:12px; color:var(--text-muted); margin-top:8px }
+
+  .sector-btn {
+    display: inline-block;
+    margin: 0 8px 8px 0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .sector-btn.active {
+    font-weight: 700;
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .guide-box {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 2;
+  }
+  .guide-box h3 { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:14px }
+  .guide-box .step { font-weight:700; margin-top:12px; margin-bottom:4px; color:var(--text-primary) }
+
+  /* Signal Badge */
+  .signal-bar {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+  }
+  .signal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+  .signal-label { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text-muted); display:flex; align-items:center; gap:4px }
+  .signal-badge { font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px }
+  .signal-badge.buy { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.25) }
+  .signal-badge.sell { background:rgba(239,68,68,.12); color:#f87171; border:1px solid rgba(239,68,68,.25) }
+  .signal-badge.hold { background:rgba(234,179,8,.12); color:#fbbf24; border:1px solid rgba(234,179,8,.25) }
+  .signal-reasoning { font-size:12px; color:var(--text-secondary); line-height:1.7 }
+  .signal-confidence { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:10px; color:var(--text-muted) }
+  .confidence-bar { flex:1; height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden }
+  .confidence-fill { height:100%; border-radius:2px; transition:width .6s ease }
+  .confidence-fill.buy { background:#4ade80 }
+  .confidence-fill.sell { background:#f87171 }
+  .confidence-fill.hold { background:#fbbf24 }
+  .signal-disclaimer { margin-top:8px; font-size:9px; color:var(--text-muted); opacity:.5; font-style:italic }
+
+  /* Live bar */
+  .live-bar {
+    display:flex; align-items:center; gap:10px; padding:12px 20px;
+  }
+  .live-indicator {
+    display:flex; align-items:center; gap:5px;
+    font-size:10px; font-weight:800; letter-spacing:1.5px; color:var(--positive);
+  }
+  .live-dot {
+    width:7px; height:7px; border-radius:50%; background:var(--positive);
+    animation: livePulse 1.5s ease infinite;
+  }
+  @keyframes livePulse {
+    0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(34,197,94,.4) }
+    50% { opacity:.7; box-shadow:0 0 0 6px rgba(34,197,94,0) }
+  }
+  .live-updated { font-size:11px; color:var(--text-muted); flex:1 }
+  .refresh-btn {
+    background:var(--card-bg); border:1px solid var(--border); border-radius:8px;
+    width:32px; height:32px; font-size:16px; color:var(--text-secondary);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:all .2s;
+  }
+  .refresh-btn:active { transform:rotate(180deg); background:var(--accent); color:#fff }
+  .refresh-btn.spinning { animation:spin .6s ease }
+
+  /* Time group header */
+  .time-group {
+    font-size:11px; color:var(--text-muted); padding:4px 20px 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .time-group-line { flex:1; height:1px; background:var(--border) }
+  .news-time {
+    font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;
+    margin-top:4px;
+  }
+
+  /* Filter tabs */
+  .filter-bar {
+    display:flex; gap:0; margin:0 20px 4px; background:var(--card-bg);
+    border-radius:10px; padding:3px; border:1px solid var(--border);
+  }
+  .filter-tab {
+    flex:1; padding:9px 0; border:none; border-radius:8px; font-size:12px;
+    font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s;
+    background:transparent; color:var(--text-muted);
+  }
+  .filter-tab.active { background:var(--accent); color:#fff }
+  .filter-tab:not(.active):active { background:rgba(255,255,255,.04) }
+  .filter-empty {
+    text-align:center; padding:48px 20px; color:var(--text-muted);
+  }
+  .filter-empty-icon { font-size:40px; margin-bottom:12px; opacity:.4 }
+  .filter-empty p { font-size:13px; line-height:1.8 }
+  .filter-empty-btn {
+    margin-top:16px; background:var(--accent); border:none; border-radius:10px;
+    padding:10px 24px; font-size:13px; font-weight:700; color:#fff;
+    cursor:pointer; font-family:inherit;
+  }
+
+  /* Watchlist */
+  .wl-add-bar { display:flex; gap:8px; margin-bottom:12px }
+  .wl-presets { display:flex; flex-wrap:wrap; gap:6px }
+  .wl-preset {
+    font-size:11px; padding:5px 10px; border-radius:16px;
+    border:1px solid var(--border); background:transparent;
+    color:var(--text-secondary); cursor:pointer; font-family:inherit; transition:all .2s;
+  }
+  .wl-preset:active { background:var(--accent); color:#fff; border-color:var(--accent) }
+
+  .wl-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; background:var(--card-bg); border-radius:10px;
+    margin-bottom:8px; animation:slideUp .3s ease both;
+  }
+  .wl-item-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0 }
+  .wl-item-right { display:flex; align-items:center; gap:10px; flex-shrink:0 }
+  .wl-price {
+    text-align:right; min-width:80px;
+  }
+  .wl-price-value {
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--text-primary);
+  }
+  .wl-price-change { font-size:10px; font-weight:600 }
+  .wl-price-change.up { color:var(--positive) }
+  .wl-price-change.down { color:var(--negative) }
+  .wl-price-change.flat { color:var(--text-muted) }
+  .wl-price-loading {
+    width:60px; height:12px; border-radius:4px;
+    background:linear-gradient(90deg,var(--card-bg) 25%,rgba(255,255,255,.06) 50%,var(--card-bg) 75%);
+    background-size:200% 100%;
+    animation:shimmer 1.5s infinite;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .wl-ticker {
+    font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--text-primary);
+    min-width:72px;
+  }
+  .wl-name { font-size:12px; color:var(--text-secondary) }
+  .wl-remove {
+    background:none; border:none; color:var(--text-muted); font-size:18px;
+    cursor:pointer; padding:4px 8px; border-radius:6px; transition:all .2s;
+  }
+  .wl-remove:active { color:#f87171; background:rgba(239,68,68,.1) }
+  .wl-empty {
+    text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; line-height:1.8;
+  }
+  .wl-news-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:10px; padding:2px 8px; border-radius:4px;
+    background:rgba(99,102,241,.1); color:var(--tag-color); font-weight:600; margin-left:8px;
+  }
+
+  /* Content spacer */
+  .content-spacer { padding-bottom: calc(var(--safe-bottom) + 80px) }
+
+  /* PWA Install Banner */
+  .install-banner {
+    margin: 0 20px 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(99,102,241,.05));
+    border: 1px solid rgba(99,102,241,.2);
+    border-radius: 12px;
+    display: none;
+  }
+  .install-banner.show { display:block; animation: slideUp .4s ease }
+  .install-banner h3 { font-size:14px; font-weight:700; margin-bottom:8px }
+  .install-banner p { font-size:12px; color:var(--text-secondary); line-height:1.8 }
+  .install-banner .steps { margin-top:8px }
+  .install-banner .step-item { display:flex; align-items:center; gap:8px; margin-bottom:4px }
+  .install-banner .step-num {
+    width:20px; height:20px; border-radius:50%; background:var(--accent);
+    color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .install-dismiss {
+    margin-top:12px; background:none; border:1px solid var(--border); border-radius:8px;
+    padding:8px 16px; font-size:12px; color:var(--text-secondary); cursor:pointer; font-family:inherit;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="header-brand">MARKET PULSE</div>
+      <h1 class="header-title">재상이가만든 실시간 시장 브리핑</h1>
+    </div>
+    <button class="btn-icon" onclick="openSettings()">⚙</button>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div class="install-banner" id="installBanner">
+    <h3>📱 홈 화면에 추가하기</h3>
+    <div class="steps">
+      <div class="step-item"><span class="step-num">1</span><p>Safari 하단 <strong>공유 버튼</strong> (⬆) 탭</p></div>
+      <div class="step-item"><span class="step-num">2</span><p><strong>"홈 화면에 추가"</strong> 선택</p></div>
+      <div class="step-item"><span class="step-num">3</span><p><strong>"추가"</strong> 탭 → 앱처럼 실행!</p></div>
+    </div>
+    <button class="install-dismiss" onclick="dismissInstall()">확인했어요</button>
+  </div>
+
+  <!-- Content: Briefing -->
+  <div id="briefingPage">
+    <!-- Live indicator -->
+    <div class="live-bar">
+      <div class="live-indicator"><span class="live-dot"></span>LIVE</div>
+      <span class="live-updated" id="lastUpdated"></span>
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshFeed()">↻</button>
+    </div>
+    <!-- Filter tabs -->
+    <div class="filter-bar">
+      <button class="filter-tab active" id="filterAll" onclick="setFilter('all')">전체 뉴스</button>
+      <button class="filter-tab" id="filterMine" onclick="setFilter('mine')">⭐ 내 종목</button>
+    </div>
+    <!-- Content -->
+    <div id="content" class="content-spacer"></div>
+  </div>
+
+  <!-- Content: Watchlist -->
+  <div id="watchlistPage" style="display:none" class="content-spacer">
+    <div style="padding:0 20px">
+      <!-- Add stock -->
+      <div class="wl-add-bar">
+        <input class="search-input" id="wlInput" placeholder="종목명 또는 코드 입력 (예: 펄어비스, 005930, NVDA)" style="flex:1" oninput="showSuggestions(this.value)" onblur="setTimeout(hideSuggestions,200)">
+        <button class="search-btn" onclick="addToWatchlist()" style="padding:12px 14px">추가</button>
+      </div>
+
+      <!-- Quick add presets -->
+      <div id="wlPresets" style="margin-bottom:20px"></div>
+
+      <!-- My watchlist -->
+      <div class="section-title" style="margin-bottom:14px"><span class="section-emoji">⭐</span>내 보유종목</div>
+      <div id="wlList"></div>
+
+      <!-- Filtered news for watchlist -->
+      <div id="wlNewsSection" style="margin-top:28px"></div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openSearch()">⚡</button>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="navBriefing" onclick="switchTab('briefing')">
+      <span class="nav-btn-icon">📋</span>
+      <span class="nav-btn-label">브리핑</span>
+    </button>
+    <button class="nav-btn" id="navSearch" onclick="openSearch()">
+      <span class="nav-btn-icon">🔍</span>
+      <span class="nav-btn-label">검색</span>
+    </button>
+    <button class="nav-btn" id="navWatch" onclick="switchTab('watchlist')">
+      <span class="nav-btn-icon">⭐</span>
+      <span class="nav-btn-label">관심</span>
+    </button>
+  </div>
+</div>
+
+<!-- Search Modal -->
+<div class="modal" id="searchModal">
+  <div class="modal-header">
+    <button class="modal-back" onclick="closeSearch()">←</button>
+    <input class="search-input" id="searchInput" placeholder="예: NVIDIA 실적 전망, 삼성전자 HBM..." />
+    <button class="search-btn" id="searchBtn" onclick="doSearch()">검색</button>
+  </div>
+  <div class="modal-body" id="searchResults">
+    <div class="search-empty">
+      <div class="search-empty-icon">⚡</div>
+      <p>Claude가 웹을 검색하고<br>증시 관련 뉴스를 분석합니다</p>
+      <div class="suggestion-chips" id="chips"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal" id="settingsModal">
+  <div class="modal-header">
+    <button class="modal-back" onclick="closeSettings()">←</button>
+    <h2 style="font-size:16px;font-weight:700">설정</h2>
+  </div>
+  <div class="modal-body">
+    <div class="settings-group">
+      <div class="settings-label">브리핑 시각</div>
+      <input type="time" class="time-input" id="briefingTime" value="06:30" onchange="saveSettings()">
+      <p class="settings-hint">매일 설정된 시각에 푸시 알림과 함께 브리핑이 생성됩니다</p>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-label">관심 섹터</div>
+      <div id="sectorBtns"></div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-label">CLAUDE API 키</div>
+      <input type="password" class="search-input" id="apiKeyInput" placeholder="sk-ant-..." style="width:100%;margin-bottom:8px">
+      <button class="search-btn" onclick="saveApiKey()" style="width:100%">저장</button>
+      <p class="settings-hint">검색 기능에 사용됩니다. 키는 기기에만 저장됩니다. <a href="https://console.anthropic.com/" target="_blank" style="color:var(--accent)">API 키 발급 →</a></p>
+    </div>
+
+    <div class="guide-box">
+      <h3>🏗️ 풀 프로덕션 구현 가이드</h3>
+      <p class="step">1단계: 뉴스 수집 파이프라인</p>
+      <p>• NewsAPI.org / Alpha Vantage (미국)</p>
+      <p>• 한경 API / 연합뉴스 RSS (한국)</p>
+      <p>• cron job → 매일 06:00 KST 수집</p>
+      <p class="step">2단계: Claude 분석 엔진</p>
+      <p>• 수집 뉴스 → Claude API + web_search</p>
+      <p>• 영향도 분류, 종목 태깅, 요약 자동 생성</p>
+      <p class="step">3단계: 알림 시스템</p>
+      <p>• Firebase Cloud Messaging (푸시)</p>
+      <p>• 사용자별 시각 트리거</p>
+      <p class="step">4단계: 앱 배포</p>
+      <p>• React Native (Expo) → App Store</p>
+      <p>• 또는 이 PWA를 그대로 호스팅</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Real-time Feed Data (production: fetched from news APIs + Claude) ───
+const now = Date.now();
+const MIN = 60*1000, HOUR = 60*MIN;
+
+const NEWS_FEED = [
+  { id:"n1", ts: now - 3*MIN, market:"us", tag:"Fed", title:"연준, 6월 금리 동결 시사 — 파월 '인플레 둔화 확인 필요'", summary:"파월 의장이 상원 청문회에서 추가 금리인하에 신중한 태도를 보이며, 6월 FOMC 동결 가능성이 85%로 상승. 10년물 국채금리 4.32%로 소폭 상승.", impact:"negative", tickers:["SPY","TLT","QQQ"], signal:"sell", confidence:65, analysis:"금리 동결 장기화 시 성장주 밸류에이션 압박. 다만 CPI 하회와 상충되어 시장 방향성 불투명. 국채 ETF(TLT) 단기 약세, 기술주 변동성 확대 예상." },
+  { id:"n2", ts: now - 18*MIN, market:"us", tag:"Tech", title:"NVIDIA, 차세대 Blackwell Ultra 양산 일정 앞당겨 — AI capex 사이클 지속", summary:"NVIDIA가 Blackwell Ultra GPU 양산을 Q3에서 Q2 말로 앞당긴다고 발표. 하이퍼스케일러 수주 물량 확대 기대감에 시간외 +4.2%.", impact:"positive", tickers:["NVDA","AMD","AVGO"], signal:"buy", confidence:82, analysis:"AI 투자 사이클 가속 확인. 양산 앞당김은 수요 견조 시그널. NVDA 밸류에이션 부담 있으나 실적 모멘텀이 상쇄. 관련 서플라이체인(AMD, AVGO, SK하이닉스)도 수혜." },
+  { id:"n3", ts: now - 42*MIN, market:"us", tag:"Macro", title:"3월 CPI 전년비 2.8% — 예상(2.9%) 하회", summary:"헤드라인 CPI가 시장 예상을 소폭 하회하며 인플레 둔화 추세 확인. 다만 주거비 항목은 여전히 견조해 core CPI는 3.1%로 예상 부합.", impact:"positive", tickers:["SPY","DXY"], signal:"buy", confidence:58, analysis:"인플레 둔화는 연내 금리인하 가능성 유지에 긍정적. 다만 주거비 경직성으로 core CPI는 목표 대비 여전히 높아 강한 매수 시그널은 아님. 지수 소폭 우호적." },
+  { id:"n4", ts: now - 1.2*HOUR, market:"kr", tag:"반도체", title:"삼성전자, HBM4 조기 양산 계획 발표 — NVIDIA 공급사 선정 기대", summary:"삼성전자가 HBM4를 당초 계획 대비 2개월 앞당겨 양산하겠다고 밝힘. NVIDIA 차세대 GPU향 공급사 선정 가능성에 외국인 순매수 전환.", impact:"positive", tickers:["005930","000660"], signal:"buy", confidence:75, analysis:"HBM4 조기 양산은 기술 격차 축소 시그널. NVIDIA 공급사 선정 시 주가 리레이팅 가능. 현 주가 PBR 1.1배 수준으로 하방 제한적. SK하이닉스 대비 밸류 매력." },
+  { id:"n5", ts: now - 1.5*HOUR, market:"kr", tag:"정책", title:"금통위 기준금리 2.50% 동결 — 하반기 인하 여지 시사", summary:"한국은행이 기준금리를 2.50%로 동결하며 4회 연속 동결. 다만 이창용 총재가 하반기 경기 하방 리스크를 언급하며 인하 가능성을 열어둠.", impact:"neutral", tickers:["KOSPI","KRW"], signal:"hold", confidence:50, analysis:"시장 예상에 부합하는 동결로 서프라이즈 요인 없음. 하반기 인하 기대는 이미 선반영. 원화 약세 압력 지속 시 수출주에는 우호적이나 내수주에는 중립." },
+  { id:"n6", ts: now - 2.3*HOUR, market:"kr", tag:"2차전지", title:"LG에너지솔루션, GM향 46 시리즈 배터리 수주 확정", summary:"LG에너지솔루션이 GM 차세대 EV 플랫폼향 46시리즈 원통형 배터리 대규모 수주를 확정. 계약 규모 약 12조원으로 추정.", impact:"positive", tickers:["373220","006400"], signal:"buy", confidence:78, analysis:"12조원 규모 대형 수주로 수주잔고 대폭 확대. 46시리즈 양산 능력 입증은 테슬라향 수주 기대감도 자극. 현 주가 대비 2025E P/E 할인 구간. 중장기 비중확대 유효." },
+  { id:"n7", ts: now - 4*HOUR, market:"us", tag:"Trade", title:"미중 반도체 관세 추가 부과 예고 — 중국산 레거시 칩 25%→35%", summary:"미 상무부가 중국산 레거시 반도체에 대한 관세를 35%로 상향 예고. 반도체 공급망 재편 가속화 전망.", impact:"negative", tickers:["INTC","SMH"], signal:"sell", confidence:70, analysis:"레거시 칩 관세 상향은 반도체 장비·소재 원가 상승 요인. INTC는 미국 내 생산 비중 높아 직접 피해는 제한적이나 업종 센티먼트 악화. 단기 리스크 회피 권고." },
+  { id:"n8", ts: now - 5*HOUR, market:"us", tag:"Earnings", title:"JP모건 1Q 실적 서프라이즈 — 순이익 전년비 +12%", summary:"JP모건이 시장 예상을 상회하는 1분기 실적을 발표. 트레이딩 수익 호조와 순이자마진 개선이 주요 동력.", impact:"positive", tickers:["JPM","XLF"], signal:"buy", confidence:72, analysis:"은행 섹터 실적 시즌 긍정적 시작. NIM 개선은 고금리 환경 수혜 지속 확인. 금융주 ETF(XLF) 비중확대 고려. 다만 대손충당금 추이 모니터링 필요." },
+  { id:"n9", ts: now - 6*HOUR, market:"kr", tag:"자동차", title:"현대차, 미국 조지아 공장 EV 생산량 월 1만대 돌파", summary:"현대차 메타플랜트 아메리카(HMGMA)가 월 생산 1만대를 돌파하며 IRA 보조금 수혜 본격화.", impact:"positive", tickers:["005380","012330"], signal:"buy", confidence:80, analysis:"IRA 보조금 수혜 본격화로 미국 내 EV 수익성 개선 확인. 월 1만대 생산은 연간 12만대 규모로 미국 매출 비중 확대. 현 P/E 5배 수준 밸류 매력 지속." },
+  { id:"n10", ts: now - 8*HOUR, market:"kr", tag:"바이오", title:"삼성바이오, ADC CDMO 대규모 수주 — 글로벌 빅파마향", summary:"삼성바이오로직스가 글로벌 빅파마 2곳과 ADC(항체약물복합체) 위탁생산 계약을 체결. 계약 규모 약 8천억원.", impact:"positive", tickers:["207940"], signal:"buy", confidence:74, analysis:"ADC는 차세대 항암제의 핵심 모달리티. CDMO 수주 확대는 기술 경쟁력 검증. 8천억 수주는 연간 매출 대비 약 20% 수준. 수주잔고 증가 → 실적 가시성 강화." },
+];
+
+// For watchlist news reference (keep BRIEFINGS-like accessor for watchlist page)
+const BRIEFINGS = [{ date:"today", us: NEWS_FEED.filter(n=>n.market==='us'), kr: NEWS_FEED.filter(n=>n.market==='kr') }];
+
+const SECTORS = ["반도체","2차전지","자동차","바이오","금융","IT/소프트웨어"];
+const SUGGESTIONS = ["오늘 미국 증시 마감 요약","삼성전자 HBM 최신 뉴스","미중 관세 영향 분석","KOSPI 전망","연준 금리 전망","엔비디아 실적"];
+
+let currentFilter = 'all';
+let activeSectors = JSON.parse(localStorage.getItem('mp_sectors') || '["반도체","2차전지"]');
+let apiKey = localStorage.getItem('mp_apikey') || '';
+let watchlist = JSON.parse(localStorage.getItem('mp_watchlist') || '[]');
+let seenIds = new Set(JSON.parse(localStorage.getItem('mp_seen') || '[]'));
+let lastRefresh = Date.now();
+
+// ─── Utilities ───
+function relativeTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < MIN) return '방금';
+  if (diff < HOUR) return `${Math.floor(diff/MIN)}분 전`;
+  if (diff < 24*HOUR) return `${Math.floor(diff/HOUR)}시간 전`;
+  return `${Math.floor(diff/(24*HOUR))}일 전`;
+}
+
+function timeHHMM(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function impactIcon(impact) {
+  return impact === 'positive' ? '▲' : impact === 'negative' ? '▼' : '●';
+}
+
+function isWatchlistMatch(item) {
+  return item.tickers.some(t => watchlist.includes(t) || watchlist.includes(t.toUpperCase()));
+}
+
+// ─── Deduplication ───
+function deduplicateFeed(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    // Deduplicate by normalized title (remove spaces/punctuation)
+    const key = item.title.replace(/[\s\-—·,\.]/g, '').toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// ─── Filter & Render ───
+function setFilter(f) {
+  currentFilter = f;
+  document.getElementById('filterAll').classList.toggle('active', f === 'all');
+  document.getElementById('filterMine').classList.toggle('active', f === 'mine');
+  renderContent();
+}
+
+function updateLastUpdated() {
+  document.getElementById('lastUpdated').textContent = `${relativeTime(lastRefresh)} 업데이트`;
+}
+
+function refreshFeed() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  setTimeout(() => btn.classList.remove('spinning'), 600);
+  lastRefresh = Date.now();
+  updateLastUpdated();
+  renderContent();
+}
+
+function renderContent() {
+  updateLastUpdated();
+
+  // Deduplicate
+  let feed = deduplicateFeed([...NEWS_FEED].sort((a,b) => b.ts - a.ts));
+
+  // Filter by watchlist
+  if (currentFilter === 'mine') {
+    if (!watchlist.length) {
+      document.getElementById('content').innerHTML =
+        `<div class="filter-empty"><div class="filter-empty-icon">⭐</div><p>관심종목을 먼저 추가해주세요<br>하단 ⭐관심 탭에서 보유종목을 등록하면<br>관련 뉴스만 모아볼 수 있습니다</p>
+         <button class="filter-empty-btn" onclick="switchTab('watchlist')">종목 추가하러 가기</button></div>`;
+      return;
+    }
+    feed = feed.filter(isWatchlistMatch);
+    if (!feed.length) {
+      document.getElementById('content').innerHTML =
+        `<div class="filter-empty"><div class="filter-empty-icon">📭</div><p>내 종목(${watchlist.join(', ')}) 관련<br>뉴스가 없습니다</p></div>`;
+      return;
+    }
+  }
+
+  // Group by time bucket
+  const groups = [];
+  let currentGroup = null;
+  feed.forEach(item => {
+    const diff = Date.now() - item.ts;
+    let label;
+    if (diff < 30*MIN) label = '방금 전';
+    else if (diff < HOUR) label = '1시간 이내';
+    else if (diff < 3*HOUR) label = `${Math.floor(diff/HOUR)}시간 전`;
+    else if (diff < 12*HOUR) label = '오늘 이전';
+    else label = '어제';
+
+    if (!currentGroup || currentGroup.label !== label) {
+      currentGroup = { label, items: [] };
+      groups.push(currentGroup);
+    }
+    currentGroup.items.push(item);
+  });
+
+  let html = '';
+  let cardIdx = 0;
+  groups.forEach(g => {
+    html += `<div class="time-group"><span>${g.label}</span><div class="time-group-line"></div></div>`;
+    html += `<div class="section" style="margin-bottom:8px">`;
+    g.items.forEach(item => {
+      const isNew = (Date.now() - item.ts) < 30*MIN;
+      html += renderCard(item, cardIdx++, isNew);
+    });
+    html += `</div>`;
+  });
+
+  if (currentFilter === 'mine') {
+    html = `<div style="padding:0 20px 8px"><span class="wl-news-badge" style="font-size:11px;padding:4px 10px">${feed.length}건의 내 종목 뉴스</span></div>` + html;
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderCard(item, idx, isNew) {
+  const id = `card-${Date.now()}-${idx}`;
+  const signalMap = { buy:{label:'매수',icon:'🟢'}, sell:{label:'매도',icon:'🔴'}, hold:{label:'관망',icon:'🟡'} };
+  const sig = signalMap[item.signal] || signalMap.hold;
+  const flag = item.market === 'us' ? '🇺🇸' : item.market === 'kr' ? '🇰🇷' : '';
+  const timeStr = item.ts ? relativeTime(item.ts) : '';
+  const newBadge = isNew ? `<span style="font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;background:rgba(239,68,68,.15);color:#f87171;margin-left:6px">NEW</span>` : '';
+  return `
+    <div class="news-card ${item.impact} animate-in delay-${Math.min(idx,5)}" onclick="toggleCard('${id}')">
+      <div class="card-meta">
+        <span class="tag">${flag} ${item.tag}</span>
+        <span class="impact-icon ${item.impact}">${impactIcon(item.impact)}</span>
+        ${newBadge}
+        <span style="margin-left:auto"><span class="signal-badge ${item.signal}">${sig.icon} ${sig.label}</span></span>
+      </div>
+      <div class="card-title">${item.title}</div>
+      ${timeStr ? `<div class="news-time">${timeHHMM(item.ts)} · ${timeStr}</div>` : ''}
+      <div class="card-detail" id="${id}">
+        <p>${item.summary}</p>
+        <div class="ticker-list">${item.tickers.map(t=>`<span class="ticker">${t}</span>`).join('')}</div>
+        <div class="signal-bar">
+          <div class="signal-header">
+            <span class="signal-label">⚡ AI 투자 시그널</span>
+            <span class="signal-badge ${item.signal}">${sig.label}</span>
+          </div>
+          <div class="signal-reasoning">${item.analysis}</div>
+          <div class="signal-confidence">
+            <span>확신도</span>
+            <div class="confidence-bar"><div class="confidence-fill ${item.signal}" style="width:${item.confidence}%"></div></div>
+            <span>${item.confidence}%</span>
+          </div>
+          <div class="signal-disclaimer">※ 투자 참고용이며 매매 권유가 아닙니다</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ─── Search ───
+function openSearch() {
+  document.getElementById('searchModal').classList.add('open');
+  document.getElementById('searchInput').focus();
+}
+function closeSearch() {
+  document.getElementById('searchModal').classList.remove('open');
+}
+
+function renderChips() {
+  document.getElementById('chips').innerHTML = SUGGESTIONS.map(q =>
+    `<button class="chip" onclick="quickSearch('${q}')">${q}</button>`
+  ).join('');
+}
+
+function quickSearch(q) {
+  document.getElementById('searchInput').value = q;
+  doSearch();
+}
+
+async function doSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+
+  const key = apiKey || localStorage.getItem('mp_apikey');
+  if (!key) {
+    document.getElementById('searchResults').innerHTML =
+      `<div class="result-box"><div class="result-label">⚠️ API 키 필요</div><div class="result-text">설정(⚙)에서 Claude API 키를 먼저 입력해주세요.\n\nhttps://console.anthropic.com 에서 발급받을 수 있습니다.</div></div>`;
+    return;
+  }
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  btn.textContent = '검색중...';
+  document.getElementById('searchResults').innerHTML = `<div class="loading-text">🔍 Claude가 웹을 검색하고 분석 중입니다...</div>`;
+
+  try {
+    // NOTE: 프로덕션에서는 반드시 백엔드 프록시를 통해 호출해야 합니다.
+    // 이 프로토타입은 테스트 목적으로 직접 호출합니다.
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: `당신은 한국 투자자를 위한 증시 뉴스 분석 전문가입니다. 다음 질문에 대해 최신 뉴스를 웹에서 검색하고, 한국어로 간결하게 답변해주세요. 핵심 팩트 위주로, 투자 판단에 도움이 되는 정보를 우선합니다. 마크다운은 사용하지 말고 평문으로 답변하세요.\n\n질문: ${query}`
+        }]
+      })
+    });
+
+    const data = await resp.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || JSON.stringify(data.error));
+    }
+
+    const text = (data.content || [])
+      .filter(item => item.type === 'text')
+      .map(item => item.text)
+      .join('\n');
+
+    document.getElementById('searchResults').innerHTML =
+      `<div class="result-box"><div class="result-label">⚡ Claude 분석 결과</div><div class="result-text">${escapeHtml(text || '결과를 가져올 수 없습니다.')}</div></div>`;
+  } catch(err) {
+    document.getElementById('searchResults').innerHTML =
+      `<div class="result-box"><div class="result-label">⚠️ 오류</div><div class="result-text">${escapeHtml(err.message)}\n\nAPI 키를 확인하거나, 네트워크 연결을 확인해주세요.</div></div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '검색';
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ─── Settings ───
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+  document.getElementById('briefingTime').value = localStorage.getItem('mp_time') || '06:30';
+  document.getElementById('apiKeyInput').value = apiKey ? '••••••••' : '';
+  renderSectors();
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+function renderSectors() {
+  document.getElementById('sectorBtns').innerHTML = SECTORS.map(s =>
+    `<button class="sector-btn ${activeSectors.includes(s)?'active':''}" onclick="toggleSector('${s}')">${s}</button>`
+  ).join('');
+}
+
+function toggleSector(s) {
+  if (activeSectors.includes(s)) activeSectors = activeSectors.filter(x=>x!==s);
+  else activeSectors.push(s);
+  localStorage.setItem('mp_sectors', JSON.stringify(activeSectors));
+  renderSectors();
+}
+
+function saveSettings() {
+  localStorage.setItem('mp_time', document.getElementById('briefingTime').value);
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (val && !val.startsWith('••')) {
+    apiKey = val;
+    localStorage.setItem('mp_apikey', val);
+    document.getElementById('apiKeyInput').value = '••••••••';
+    alert('API 키가 저장되었습니다.');
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('briefingPage').style.display = tab === 'briefing' ? '' : 'none';
+  document.getElementById('watchlistPage').style.display = tab === 'watchlist' ? '' : 'none';
+  if (tab === 'briefing') document.getElementById('navBriefing').classList.add('active');
+  if (tab === 'watchlist') {
+    document.getElementById('navWatch').classList.add('active');
+    renderWatchlist();
+    fetchPrices(); // auto-fetch prices
+  }
+}
+
+// ─── Watchlist ───
+// Total: 199 KR + 218 US = 417 stocks
+const STOCK_DB = {
+  '005930':{name:'삼성전자',market:'kr'},
+  '000660':{name:'SK하이닉스',market:'kr'},
+  '373220':{name:'LG에너지솔루션',market:'kr'},
+  '005380':{name:'현대차',market:'kr'},
+  '000270':{name:'기아',market:'kr'},
+  '207940':{name:'삼성바이오로직스',market:'kr'},
+  '005490':{name:'POSCO홀딩스',market:'kr'},
+  '035420':{name:'NAVER',market:'kr'},
+  '006400':{name:'LG전자',market:'kr'},
+  '051910':{name:'LG화학',market:'kr'},
+  '068270':{name:'셀트리온',market:'kr'},
+  '035720':{name:'카카오',market:'kr'},
+  '105560':{name:'KB금융',market:'kr'},
+  '055550':{name:'신한지주',market:'kr'},
+  '012330':{name:'현대모비스',market:'kr'},
+  '086790':{name:'하나금융지주',market:'kr'},
+  '034730':{name:'SK',market:'kr'},
+  '015760':{name:'한국전력',market:'kr'},
+  '003550':{name:'LG',market:'kr'},
+  '017670':{name:'SK텔레콤',market:'kr'},
+  '028260':{name:'삼성물산',market:'kr'},
+  '009150':{name:'삼성전기',market:'kr'},
+  '018260':{name:'삼성에스디에스',market:'kr'},
+  '032830':{name:'삼성생명',market:'kr'},
+  '010130':{name:'고려아연',market:'kr'},
+  '066570':{name:'LG전자우',market:'kr'},
+  '096770':{name:'SK이노베이션',market:'kr'},
+  '010950':{name:'S-Oil',market:'kr'},
+  '003490':{name:'대한항공',market:'kr'},
+  '034020':{name:'두산에너빌리티',market:'kr'},
+  '030200':{name:'KT',market:'kr'},
+  '011200':{name:'HMM',market:'kr'},
+  '267250':{name:'HD현대',market:'kr'},
+  '329180':{name:'현대중공업',market:'kr'},
+  '042660':{name:'한화오션',market:'kr'},
+  '009540':{name:'한국조선해양',market:'kr'},
+  '010140':{name:'삼성중공업',market:'kr'},
+  '036460':{name:'한국가스공사',market:'kr'},
+  '001570':{name:'금양',market:'kr'},
+  '078930':{name:'GS',market:'kr'},
+  '051900':{name:'LG생활건강',market:'kr'},
+  '090430':{name:'아모레퍼시픽',market:'kr'},
+  '004020':{name:'현대제철',market:'kr'},
+  '000810':{name:'삼성화재',market:'kr'},
+  '006800':{name:'미래에셋증권',market:'kr'},
+  '016360':{name:'삼성증권',market:'kr'},
+  '138040':{name:'메리츠금융지주',market:'kr'},
+  '316140':{name:'우리금융지주',market:'kr'},
+  '024110':{name:'기업은행',market:'kr'},
+  '002790':{name:'아모레G',market:'kr'},
+  '180640':{name:'한진칼',market:'kr'},
+  '020560':{name:'아시아나항공',market:'kr'},
+  '047050':{name:'포스코인터내셔널',market:'kr'},
+  '011170':{name:'롯데케미칼',market:'kr'},
+  '004170':{name:'신세계',market:'kr'},
+  '069500':{name:'KODEX 200',market:'kr'},
+  '271560':{name:'오리온',market:'kr'},
+  '000720':{name:'현대건설',market:'kr'},
+  '006360':{name:'GS건설',market:'kr'},
+  '009830':{name:'한화솔루션',market:'kr'},
+  '021240':{name:'코웨이',market:'kr'},
+  '033780':{name:'KT&G',market:'kr'},
+  '088350':{name:'한화생명',market:'kr'},
+  '052690':{name:'한전기술',market:'kr'},
+  '011780':{name:'금호석유',market:'kr'},
+  '161390':{name:'한국타이어앤테크놀로지',market:'kr'},
+  '003670':{name:'포스코퓨처엠',market:'kr'},
+  '402340':{name:'SK스퀘어',market:'kr'},
+  '361610':{name:'SK아이이테크놀로지',market:'kr'},
+  '138930':{name:'BNK금융지주',market:'kr'},
+  '139130':{name:'DGB금융지주',market:'kr'},
+  '032640':{name:'LG유플러스',market:'kr'},
+  '011790':{name:'SKC',market:'kr'},
+  '008930':{name:'한미사이언스',market:'kr'},
+  '006110':{name:'삼아알미늄',market:'kr'},
+  '004990':{name:'롯데지주',market:'kr'},
+  '023530':{name:'롯데관광개발',market:'kr'},
+  '280360':{name:'롯데웰푸드',market:'kr'},
+  '128940':{name:'한미약품',market:'kr'},
+  '006280':{name:'녹십자',market:'kr'},
+  '000100':{name:'유한양행',market:'kr'},
+  '185750':{name:'종근당',market:'kr'},
+  '002380':{name:'KCC',market:'kr'},
+  '003410':{name:'쌍용C&E',market:'kr'},
+  '008770':{name:'호텔신라',market:'kr'},
+  '097950':{name:'CJ제일제당',market:'kr'},
+  '001040':{name:'CJ',market:'kr'},
+  '079550':{name:'LIG넥스원',market:'kr'},
+  '012450':{name:'한화에어로스페이스',market:'kr'},
+  '047810':{name:'한국항공우주',market:'kr'},
+  '298050':{name:'효성첨단소재',market:'kr'},
+  '004370':{name:'농심',market:'kr'},
+  '282330':{name:'BGF리테일',market:'kr'},
+  '307950':{name:'현대오일뱅크',market:'kr'},
+  '006650':{name:'대한유화',market:'kr'},
+  '006120':{name:'SK디스커버리',market:'kr'},
+  '000150':{name:'두산',market:'kr'},
+  '042670':{name:'두산인프라코어',market:'kr'},
+  '005850':{name:'에스엘',market:'kr'},
+  '241560':{name:'두산밥캣',market:'kr'},
+  '009240':{name:'한샘',market:'kr'},
+  '005940':{name:'NH투자증권',market:'kr'},
+  '003240':{name:'태광산업',market:'kr'},
+  '001450':{name:'현대해상',market:'kr'},
+  '000880':{name:'한화',market:'kr'},
+  '036570':{name:'엔씨소프트',market:'kr'},
+  '030000':{name:'제일기획',market:'kr'},
+  '035250':{name:'강원랜드',market:'kr'},
+  '192820':{name:'코스맥스',market:'kr'},
+  '001120':{name:'LX인터내셔널',market:'kr'},
+  '001740':{name:'SK네트웍스',market:'kr'},
+  '014820':{name:'동원시스템즈',market:'kr'},
+  '000120':{name:'CJ대한통운',market:'kr'},
+  '071050':{name:'한국금융지주',market:'kr'},
+  '326030':{name:'SK바이오팜',market:'kr'},
+  '302440':{name:'SK바이오사이언스',market:'kr'},
+  '247540':{name:'에코프로비엠',market:'kr'},
+  '086520':{name:'에코프로',market:'kr'},
+  '196170':{name:'알테오젠',market:'kr'},
+  '259960':{name:'크래프톤',market:'kr'},
+  '263750':{name:'펄어비스',market:'kr'},
+  '251270':{name:'넷마블',market:'kr'},
+  '112040':{name:'위메이드',market:'kr'},
+  '293490':{name:'카카오게임즈',market:'kr'},
+  '041510':{name:'에스엠',market:'kr'},
+  '352820':{name:'하이브',market:'kr'},
+  '122870':{name:'와이지엔터테인먼트',market:'kr'},
+  '035900':{name:'JYP Ent.',market:'kr'},
+  '145020':{name:'휴젤',market:'kr'},
+  '328130':{name:'루닛',market:'kr'},
+  '403870':{name:'HPSP',market:'kr'},
+  '042700':{name:'한미반도체',market:'kr'},
+  '377300':{name:'카카오페이',market:'kr'},
+  '323410':{name:'카카오뱅크',market:'kr'},
+  '357780':{name:'솔브레인',market:'kr'},
+  '336260':{name:'두산퓨얼셀',market:'kr'},
+  '240810':{name:'원익IPS',market:'kr'},
+  '064350':{name:'현대로템',market:'kr'},
+  '095340':{name:'ISC',market:'kr'},
+  '298380':{name:'에이비엘바이오',market:'kr'},
+  '091990':{name:'셀트리온헬스케어',market:'kr'},
+  '068760':{name:'셀트리온제약',market:'kr'},
+  '039030':{name:'이오테크닉스',market:'kr'},
+  '083310':{name:'엘오티베큠',market:'kr'},
+  '140860':{name:'파크시스템스',market:'kr'},
+  '108320':{name:'LX세미콘',market:'kr'},
+  '067310':{name:'하나마이크론',market:'kr'},
+  '058470':{name:'리노공업',market:'kr'},
+  '036830':{name:'솔브레인홀딩스',market:'kr'},
+  '214150':{name:'클래시스',market:'kr'},
+  '383220':{name:'F&F',market:'kr'},
+  '078340':{name:'컴투스',market:'kr'},
+  '041960':{name:'코미팜',market:'kr'},
+  '195940':{name:'HK이노엔',market:'kr'},
+  '214370':{name:'케어젠',market:'kr'},
+  '089590':{name:'제주항공',market:'kr'},
+  '006730':{name:'서부T&D',market:'kr'},
+  '299030':{name:'하나기술',market:'kr'},
+  '317770':{name:'엔에이치스팩19호',market:'kr'},
+  '131970':{name:'테스나',market:'kr'},
+  '060310':{name:'3S',market:'kr'},
+  '066910':{name:'손오공',market:'kr'},
+  '278280':{name:'천보',market:'kr'},
+  '117580':{name:'대성에너지',market:'kr'},
+  '285130':{name:'SK케미칼',market:'kr'},
+  '086900':{name:'메디톡스',market:'kr'},
+  '039200':{name:'오스코텍',market:'kr'},
+  '322000':{name:'현대에너지솔루션',market:'kr'},
+  '046890':{name:'서울반도체',market:'kr'},
+  '217190':{name:'제너셈',market:'kr'},
+  '078600':{name:'대주전자재료',market:'kr'},
+  '048260':{name:'오스템임플란트',market:'kr'},
+  '950130':{name:'엑세스바이오',market:'kr'},
+  '348210':{name:'넥스틴',market:'kr'},
+  '054950':{name:'제이브이엠',market:'kr'},
+  '222080':{name:'씨아이에스',market:'kr'},
+  '290670':{name:'대보마그네틱',market:'kr'},
+  '900140':{name:'엘브이엠씨홀딩스',market:'kr'},
+  '436530':{name:'큐알티',market:'kr'},
+  '039610':{name:'화성밸브',market:'kr'},
+  '950160':{name:'코오롱티슈진',market:'kr'},
+  '388790':{name:'라이콤',market:'kr'},
+  '200130':{name:'콜마비앤에이치',market:'kr'},
+  '340570':{name:'티앤엘',market:'kr'},
+  '101490':{name:'에스앤에스텍',market:'kr'},
+  '236810':{name:'엔비티',market:'kr'},
+  '141080':{name:'레고켐바이오',market:'kr'},
+  '214680':{name:'디알텍',market:'kr'},
+  '036090':{name:'위지트',market:'kr'},
+  '060280':{name:'큐렉소',market:'kr'},
+  '048470':{name:'대우부품',market:'kr'},
+  '053610':{name:'프로텍',market:'kr'},
+  '950170':{name:'파워로직스',market:'kr'},
+  '317830':{name:'에스피시스템스',market:'kr'},
+  '079940':{name:'가비아',market:'kr'},
+  '237690':{name:'에스티팜',market:'kr'},
+  '357120':{name:'코람코에너지리츠',market:'kr'},
+  '222800':{name:'심텍',market:'kr'},
+  '460850':{name:'코어라인소프트',market:'kr'},
+  'AAPL':{name:'Apple',market:'us'},
+  'MSFT':{name:'Microsoft',market:'us'},
+  'NVDA':{name:'NVIDIA',market:'us'},
+  'GOOGL':{name:'Alphabet',market:'us'},
+  'AMZN':{name:'Amazon',market:'us'},
+  'META':{name:'Meta',market:'us'},
+  'TSLA':{name:'Tesla',market:'us'},
+  'BRK.B':{name:'Berkshire Hathaway',market:'us'},
+  'AVGO':{name:'Broadcom',market:'us'},
+  'LLY':{name:'Eli Lilly',market:'us'},
+  'JPM':{name:'JP Morgan',market:'us'},
+  'UNH':{name:'UnitedHealth',market:'us'},
+  'V':{name:'Visa',market:'us'},
+  'MA':{name:'Mastercard',market:'us'},
+  'XOM':{name:'ExxonMobil',market:'us'},
+  'JNJ':{name:'Johnson & Johnson',market:'us'},
+  'PG':{name:'Procter & Gamble',market:'us'},
+  'HD':{name:'Home Depot',market:'us'},
+  'COST':{name:'Costco',market:'us'},
+  'ABBV':{name:'AbbVie',market:'us'},
+  'CVX':{name:'Chevron',market:'us'},
+  'MRK':{name:'Merck',market:'us'},
+  'KO':{name:'Coca-Cola',market:'us'},
+  'PEP':{name:'PepsiCo',market:'us'},
+  'WMT':{name:'Walmart',market:'us'},
+  'BAC':{name:'Bank of America',market:'us'},
+  'CRM':{name:'Salesforce',market:'us'},
+  'NFLX':{name:'Netflix',market:'us'},
+  'AMD':{name:'AMD',market:'us'},
+  'ORCL':{name:'Oracle',market:'us'},
+  'TMO':{name:'Thermo Fisher',market:'us'},
+  'ADBE':{name:'Adobe',market:'us'},
+  'ACN':{name:'Accenture',market:'us'},
+  'MCD':{name:'McDonald\'s',market:'us'},
+  'CSCO':{name:'Cisco',market:'us'},
+  'ABT':{name:'Abbott',market:'us'},
+  'DHR':{name:'Danaher',market:'us'},
+  'INTC':{name:'Intel',market:'us'},
+  'DIS':{name:'Disney',market:'us'},
+  'VZ':{name:'Verizon',market:'us'},
+  'CMCSA':{name:'Comcast',market:'us'},
+  'PFE':{name:'Pfizer',market:'us'},
+  'NKE':{name:'Nike',market:'us'},
+  'WFC':{name:'Wells Fargo',market:'us'},
+  'TXN':{name:'Texas Instruments',market:'us'},
+  'PM':{name:'Philip Morris',market:'us'},
+  'QCOM':{name:'Qualcomm',market:'us'},
+  'RTX':{name:'RTX (Raytheon)',market:'us'},
+  'MS':{name:'Morgan Stanley',market:'us'},
+  'GS':{name:'Goldman Sachs',market:'us'},
+  'BA':{name:'Boeing',market:'us'},
+  'LMT':{name:'Lockheed Martin',market:'us'},
+  'GE':{name:'GE Aerospace',market:'us'},
+  'CAT':{name:'Caterpillar',market:'us'},
+  'DE':{name:'Deere',market:'us'},
+  'UNP':{name:'Union Pacific',market:'us'},
+  'NEE':{name:'NextEra Energy',market:'us'},
+  'LOW':{name:'Lowe\'s',market:'us'},
+  'SPGI':{name:'S&P Global',market:'us'},
+  'BLK':{name:'BlackRock',market:'us'},
+  'INTU':{name:'Intuit',market:'us'},
+  'ISRG':{name:'Intuitive Surgical',market:'us'},
+  'AMAT':{name:'Applied Materials',market:'us'},
+  'LRCX':{name:'Lam Research',market:'us'},
+  'KLAC':{name:'KLA Corp',market:'us'},
+  'MU':{name:'Micron',market:'us'},
+  'MRVL':{name:'Marvell',market:'us'},
+  'SNPS':{name:'Synopsys',market:'us'},
+  'CDNS':{name:'Cadence',market:'us'},
+  'ARM':{name:'Arm Holdings',market:'us'},
+  'PANW':{name:'Palo Alto Networks',market:'us'},
+  'CRWD':{name:'CrowdStrike',market:'us'},
+  'NOW':{name:'ServiceNow',market:'us'},
+  'SNOW':{name:'Snowflake',market:'us'},
+  'PLTR':{name:'Palantir',market:'us'},
+  'UBER':{name:'Uber',market:'us'},
+  'ABNB':{name:'Airbnb',market:'us'},
+  'SQ':{name:'Block (Square)',market:'us'},
+  'SHOP':{name:'Shopify',market:'us'},
+  'COIN':{name:'Coinbase',market:'us'},
+  'MSTR':{name:'MicroStrategy',market:'us'},
+  'SOFI':{name:'SoFi',market:'us'},
+  'RIVN':{name:'Rivian',market:'us'},
+  'LCID':{name:'Lucid',market:'us'},
+  'NIO':{name:'NIO',market:'us'},
+  'XPEV':{name:'XPeng',market:'us'},
+  'LI':{name:'Li Auto',market:'us'},
+  'F':{name:'Ford',market:'us'},
+  'GM':{name:'General Motors',market:'us'},
+  'SMCI':{name:'Super Micro',market:'us'},
+  'DELL':{name:'Dell',market:'us'},
+  'HPQ':{name:'HP Inc',market:'us'},
+  'PYPL':{name:'PayPal',market:'us'},
+  'AXP':{name:'American Express',market:'us'},
+  'SCHW':{name:'Charles Schwab',market:'us'},
+  'C':{name:'Citigroup',market:'us'},
+  'USB':{name:'U.S. Bancorp',market:'us'},
+  'PNC':{name:'PNC Financial',market:'us'},
+  'TFC':{name:'Truist',market:'us'},
+  'COF':{name:'Capital One',market:'us'},
+  'BX':{name:'Blackstone',market:'us'},
+  'KKR':{name:'KKR',market:'us'},
+  'APO':{name:'Apollo Global',market:'us'},
+  'ARES':{name:'Ares Management',market:'us'},
+  'T':{name:'AT&T',market:'us'},
+  'TMUS':{name:'T-Mobile',market:'us'},
+  'PDD':{name:'PDD Holdings',market:'us'},
+  'BABA':{name:'Alibaba',market:'us'},
+  'JD':{name:'JD.com',market:'us'},
+  'BIDU':{name:'Baidu',market:'us'},
+  'TME':{name:'Tencent Music',market:'us'},
+  'NVO':{name:'Novo Nordisk',market:'us'},
+  'AZN':{name:'AstraZeneca',market:'us'},
+  'SNY':{name:'Sanofi',market:'us'},
+  'AMGN':{name:'Amgen',market:'us'},
+  'GILD':{name:'Gilead',market:'us'},
+  'REGN':{name:'Regeneron',market:'us'},
+  'VRTX':{name:'Vertex',market:'us'},
+  'BMY':{name:'Bristol-Myers Squibb',market:'us'},
+  'MRNA':{name:'Moderna',market:'us'},
+  'BNTX':{name:'BioNTech',market:'us'},
+  'ZS':{name:'Zscaler',market:'us'},
+  'FTNT':{name:'Fortinet',market:'us'},
+  'NET':{name:'Cloudflare',market:'us'},
+  'DDOG':{name:'Datadog',market:'us'},
+  'MDB':{name:'MongoDB',market:'us'},
+  'TEAM':{name:'Atlassian',market:'us'},
+  'WDAY':{name:'Workday',market:'us'},
+  'VEEV':{name:'Veeva Systems',market:'us'},
+  'TTD':{name:'The Trade Desk',market:'us'},
+  'DASH':{name:'DoorDash',market:'us'},
+  'SPOT':{name:'Spotify',market:'us'},
+  'ROKU':{name:'Roku',market:'us'},
+  'RBLX':{name:'Roblox',market:'us'},
+  'U':{name:'Unity Software',market:'us'},
+  'EA':{name:'Electronic Arts',market:'us'},
+  'TTWO':{name:'Take-Two',market:'us'},
+  'ATVI':{name:'Activision Blizzard',market:'us'},
+  'CME':{name:'CME Group',market:'us'},
+  'ICE':{name:'Intercontinental Exchange',market:'us'},
+  'MELI':{name:'MercadoLibre',market:'us'},
+  'SE':{name:'Sea Limited',market:'us'},
+  'GRAB':{name:'Grab',market:'us'},
+  'TSM':{name:'TSMC',market:'us'},
+  'ASML':{name:'ASML',market:'us'},
+  'ANET':{name:'Arista Networks',market:'us'},
+  'ON':{name:'ON Semiconductor',market:'us'},
+  'NXPI':{name:'NXP Semiconductors',market:'us'},
+  'ADI':{name:'Analog Devices',market:'us'},
+  'MCHP':{name:'Microchip',market:'us'},
+  'SWKS':{name:'Skyworks',market:'us'},
+  'WOLF':{name:'Wolfspeed',market:'us'},
+  'ENPH':{name:'Enphase Energy',market:'us'},
+  'SEDG':{name:'SolarEdge',market:'us'},
+  'FSLR':{name:'First Solar',market:'us'},
+  'PLUG':{name:'Plug Power',market:'us'},
+  'RUN':{name:'Sunrun',market:'us'},
+  'COP':{name:'ConocoPhillips',market:'us'},
+  'SLB':{name:'Schlumberger',market:'us'},
+  'OXY':{name:'Occidental',market:'us'},
+  'DVN':{name:'Devon Energy',market:'us'},
+  'HAL':{name:'Halliburton',market:'us'},
+  'GD':{name:'General Dynamics',market:'us'},
+  'NOC':{name:'Northrop Grumman',market:'us'},
+  'HII':{name:'Huntington Ingalls',market:'us'},
+  'DKNG':{name:'DraftKings',market:'us'},
+  'MGM':{name:'MGM Resorts',market:'us'},
+  'WYNN':{name:'Wynn Resorts',market:'us'},
+  'MAR':{name:'Marriott',market:'us'},
+  'HLT':{name:'Hilton',market:'us'},
+  'BKNG':{name:'Booking Holdings',market:'us'},
+  'EXPE':{name:'Expedia',market:'us'},
+  'UAL':{name:'United Airlines',market:'us'},
+  'DAL':{name:'Delta Air Lines',market:'us'},
+  'AAL':{name:'American Airlines',market:'us'},
+  'LUV':{name:'Southwest Airlines',market:'us'},
+  'FDX':{name:'FedEx',market:'us'},
+  'UPS':{name:'UPS',market:'us'},
+  'ZM':{name:'Zoom',market:'us'},
+  'SPY':{name:'S&P500 ETF',market:'us'},
+  'QQQ':{name:'Nasdaq ETF',market:'us'},
+  'DIA':{name:'Dow Jones ETF',market:'us'},
+  'IWM':{name:'Russell 2000 ETF',market:'us'},
+  'TLT':{name:'미국채20Y ETF',market:'us'},
+  'SHY':{name:'미국채1-3Y ETF',market:'us'},
+  'GLD':{name:'금 ETF',market:'us'},
+  'SLV':{name:'은 ETF',market:'us'},
+  'USO':{name:'원유 ETF',market:'us'},
+  'SMH':{name:'반도체ETF',market:'us'},
+  'XLF':{name:'금융ETF',market:'us'},
+  'XLE':{name:'에너지ETF',market:'us'},
+  'XLK':{name:'테크ETF',market:'us'},
+  'XLV':{name:'헬스케어ETF',market:'us'},
+  'XLI':{name:'산업재ETF',market:'us'},
+  'ARKK':{name:'ARK Innovation ETF',market:'us'},
+  'ARKG':{name:'ARK Genomic ETF',market:'us'},
+  'SOXL':{name:'반도체3X ETF',market:'us'},
+  'SOXS':{name:'반도체-3X ETF',market:'us'},
+  'TQQQ':{name:'나스닥3X ETF',market:'us'},
+  'SQQQ':{name:'나스닥-3X ETF',market:'us'},
+  'SPXL':{name:'S&P3X ETF',market:'us'},
+  'SPXS':{name:'S&P-3X ETF',market:'us'},
+  'VTI':{name:'Vanguard Total Market',market:'us'},
+  'VOO':{name:'Vanguard S&P500',market:'us'},
+  'VGT':{name:'Vanguard IT ETF',market:'us'},
+  'VYM':{name:'Vanguard High Dividend',market:'us'},
+  'SCHD':{name:'Schwab Dividend ETF',market:'us'},
+  'JEPI':{name:'JPM Equity Premium',market:'us'},
+  'IBIT':{name:'iShares Bitcoin ETF',market:'us'},
+  'FBTC':{name:'Fidelity Bitcoin ETF',market:'us'},
+  'ETHE':{name:'Grayscale Ethereum',market:'us'},
+  'ETHU':{name:'ProShares 2X Ether ETF',market:'us'},
+  'BITX':{name:'ProShares 2X Bitcoin ETF',market:'us'},
+  'EWY':{name:'한국 ETF',market:'us'},
+  'FXI':{name:'중국 ETF',market:'us'},
+  'EWJ':{name:'일본 ETF',market:'us'},
+  'VWO':{name:'신흥국 ETF',market:'us'},
+  'EEM':{name:'신흥국 ETF(iShares)',market:'us'},
+  // 양자컴퓨팅·AI·신성장
+  'RGTI':{name:'Rigetti Computing',market:'us'},'QUBT':{name:'Quantum Computing',market:'us'},
+  'IONQ':{name:'IonQ',market:'us'},'QBTS':{name:'D-Wave Quantum',market:'us'},
+  'RZLV':{name:'Rezolve AI',market:'us'},'BBAI':{name:'BigBear.ai',market:'us'},
+  'AI':{name:'C3.ai',market:'us'},'SOUN':{name:'SoundHound AI',market:'us'},
+  'UPST':{name:'Upstart',market:'us'},'PATH':{name:'UiPath',market:'us'},
+  'S':{name:'SentinelOne',market:'us'},'ASTS':{name:'AST SpaceMobile',market:'us'},
+  'RKLB':{name:'Rocket Lab',market:'us'},'LUNR':{name:'Intuitive Machines',market:'us'},
+  'JOBY':{name:'Joby Aviation',market:'us'},'ACHR':{name:'Archer Aviation',market:'us'},
+  // 크립토·채굴·블록체인
+  'IREN':{name:'Iren (구 Iris Energy)',market:'us'},'MARA':{name:'Marathon Digital',market:'us'},
+  'RIOT':{name:'Riot Platforms',market:'us'},'CLSK':{name:'CleanSpark',market:'us'},
+  'HUT':{name:'Hut 8 Mining',market:'us'},'CIFR':{name:'Cipher Mining',market:'us'},
+  'WULF':{name:'TeraWulf',market:'us'},'BTBT':{name:'Bit Digital',market:'us'},
+  'CORZ':{name:'Core Scientific',market:'us'},
+  // 소재·산업재
+  'GLW':{name:'Corning',market:'us'},'APD':{name:'Air Products',market:'us'},
+  'LIN':{name:'Linde',market:'us'},'SHW':{name:'Sherwin-Williams',market:'us'},
+  'FCX':{name:'Freeport-McMoRan',market:'us'},'NEM':{name:'Newmont',market:'us'},
+  'AA':{name:'Alcoa',market:'us'},'CLF':{name:'Cleveland-Cliffs',market:'us'},
+  'X':{name:'US Steel',market:'us'},'NUE':{name:'Nucor',market:'us'},
+  'MP':{name:'MP Materials',market:'us'},'LAC':{name:'Lithium Americas',market:'us'},
+  'ALB':{name:'Albemarle',market:'us'},'SQM':{name:'SQM',market:'us'},
+  // 로보틱스·자율주행
+  'TER':{name:'Teradyne',market:'us'},'ISRG':{name:'Intuitive Surgical',market:'us'},
+  'MNDY':{name:'monday.com',market:'us'},'DOCS':{name:'Doximity',market:'us'},
+  // 크립토 ETF 추가
+  'BITO':{name:'ProShares Bitcoin ETF',market:'us'},
+  'GBTC':{name:'Grayscale Bitcoin Trust',market:'us'},
+  'ETHW':{name:'Bitwise Ethereum ETF',market:'us'},
+  // 레버리지·인버스 추가
+  'FNGU':{name:'FANG+ 3X ETF',market:'us'},'FNGD':{name:'FANG+ -3X ETF',market:'us'},
+  'LABU':{name:'바이오3X ETF',market:'us'},'LABD':{name:'바이오-3X ETF',market:'us'},
+  'TNA':{name:'소형주3X ETF',market:'us'},'TZA':{name:'소형주-3X ETF',market:'us'},
+  'NUGT':{name:'금광3X ETF',market:'us'},'DUST':{name:'금광-3X ETF',market:'us'},
+  'UVXY':{name:'VIX 1.5X ETF',market:'us'},'SVXY':{name:'VIX -0.5X ETF',market:'us'},
+  // 배당·리츠
+  'O':{name:'Realty Income',market:'us'},'AMT':{name:'American Tower',market:'us'},
+  'PLD':{name:'Prologis',market:'us'},'PSA':{name:'Public Storage',market:'us'},
+  'AGNC':{name:'AGNC Investment',market:'us'},'NLY':{name:'Annaly Capital',market:'us'},
+  // 기타 인기 종목
+  'HOOD':{name:'Robinhood',market:'us'},'AFRM':{name:'Affirm',market:'us'},
+  'OPEN':{name:'Opendoor',market:'us'},'CLOV':{name:'Clover Health',market:'us'},
+  'SOFI':{name:'SoFi',market:'us'},'NU':{name:'Nu Holdings',market:'us'},
+  'CELH':{name:'Celsius Holdings',market:'us'},'MNST':{name:'Monster Beverage',market:'us'},
+  'SBUX':{name:'Starbucks',market:'us'},'CMG':{name:'Chipotle',market:'us'},
+  'LULU':{name:'Lululemon',market:'us'},'TJX':{name:'TJ Maxx',market:'us'},
+  'PANW':{name:'Palo Alto Networks',market:'us'},'OKTA':{name:'Okta',market:'us'},
+  'TWLO':{name:'Twilio',market:'us'},'PINS':{name:'Pinterest',market:'us'},
+  'SNAP':{name:'Snap',market:'us'},'LYFT':{name:'Lyft',market:'us'},
+  'GME':{name:'GameStop',market:'us'},'AMC':{name:'AMC Entertainment',market:'us'},
+  'BB':{name:'BlackBerry',market:'us'},'SPCE':{name:'Virgin Galactic',market:'us'},
+  'STEM':{name:'Stem Inc',market:'us'},'CHPT':{name:'ChargePoint',market:'us'},
+  'BLNK':{name:'Blink Charging',market:'us'},'EVGO':{name:'EVgo',market:'us'},
+  'DNA':{name:'Ginkgo Bioworks',market:'us'},'CRSP':{name:'CRISPR Therapeutics',market:'us'},
+  'EDIT':{name:'Editas Medicine',market:'us'},'NTLA':{name:'Intellia Therapeutics',market:'us'},
+  'BEAM':{name:'Beam Therapeutics',market:'us'},'VERV':{name:'Verve Therapeutics',market:'us'}
+};
+
+// Claude API fallback for unknown stocks
+async function lookupStockByAPI(query) {
+  const key = apiKey || localStorage.getItem('mp_apikey');
+  if (!key) return null;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:200,
+        messages:[{role:'user',content:`주식 종목 "${query}"의 정보를 JSON으로만 답해주세요. 형식: {"code":"종목코드","name":"종목명","market":"kr 또는 us"} 한국주식이면 6자리 숫자코드, 미국주식이면 티커를 code에 넣어주세요. 모르면 {"code":null}로 답해주세요. JSON만 출력하세요.`}]
+      })
+    });
+    const data = await resp.json();
+    const text = (data.content||[]).filter(i=>i.type==='text').map(i=>i.text).join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    if (parsed.code) {
+      // Add to local DB for future lookups
+      STOCK_DB[parsed.code] = {name:parsed.name, market:parsed.market};
+      NAME_TO_CODE[parsed.name] = parsed.code;
+      NAME_TO_CODE[parsed.name.toLowerCase()] = parsed.code;
+      return parsed.code;
+    }
+  } catch(e) { console.log('Stock lookup failed:', e); }
+  return null;
+}
+
+const NAME_TO_CODE = {};
+Object.entries(STOCK_DB).forEach(([code, info]) => {
+  NAME_TO_CODE[info.name.toLowerCase()] = code;
+  NAME_TO_CODE[info.name] = code; // exact Korean match
+});
+
+const PRESETS_KR = ['005930','000660','373220','005380','035420','207940'];
+const PRESETS_US = ['NVDA','AAPL','TSLA','MSFT','AMD','SPY'];
+
+function resolveStock(input) {
+  input = input.trim();
+  if (!input) return null;
+  // 1. Exact code match (uppercase)
+  const upper = input.toUpperCase();
+  if (STOCK_DB[upper]) return upper;
+  // 2. Exact code match (as-is, for Korean codes like 005930)
+  if (STOCK_DB[input]) return input;
+  // 3. Korean name exact match
+  if (NAME_TO_CODE[input]) return NAME_TO_CODE[input];
+  // 4. Case-insensitive name match
+  if (NAME_TO_CODE[input.toLowerCase()]) return NAME_TO_CODE[input.toLowerCase()];
+  // 5. Partial name match (first hit)
+  const lower = input.toLowerCase();
+  for (const [code, info] of Object.entries(STOCK_DB)) {
+    if (info.name.toLowerCase().includes(lower) || lower.includes(info.name.toLowerCase())) {
+      return code;
+    }
+  }
+  // 6. Not found — return as-is (user can still add custom tickers)
+  return upper;
+}
+
+function getSearchSuggestions(query) {
+  if (!query || query.length < 1) return [];
+  const q = query.toLowerCase();
+  const results = [];
+  for (const [code, info] of Object.entries(STOCK_DB)) {
+    if (watchlist.includes(code)) continue;
+    if (code.toLowerCase().includes(q) || info.name.toLowerCase().includes(q)) {
+      results.push({ code, ...info });
+    }
+    if (results.length >= 6) break;
+  }
+  return results;
+}
+
+function renderWatchlistPresets() {
+  const el = document.getElementById('wlPresets');
+  const all = [...PRESETS_KR, ...PRESETS_US].filter(t => !watchlist.includes(t));
+  if (!all.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">빠른 추가</div><div class="wl-presets">${
+    all.map(t => {
+      const s = STOCK_DB[t];
+      return `<button class="wl-preset" onclick="addStock('${t}')">${s ? s.name : t}</button>`;
+    }).join('')
+  }</div>`;
+}
+
+let stockPrices = {}; // { code: { price:'73,200', change:'+2.3%', dir:'up' } }
+let priceLoading = false;
+
+function renderWatchlist() {
+  renderWatchlistPresets();
+  const listEl = document.getElementById('wlList');
+  if (!watchlist.length) {
+    listEl.innerHTML = `<div class="wl-empty">⭐<br>보유 종목을 추가하면<br>관련 뉴스만 모아볼 수 있습니다</div>`;
+  } else {
+    listEl.innerHTML = watchlist.map((t, i) => {
+      const s = STOCK_DB[t.toUpperCase()] || STOCK_DB[t] || { name: '', market: 'unknown' };
+      const flag = s.market === 'kr' ? '🇰🇷' : s.market === 'us' ? '🇺🇸' : '';
+      const p = stockPrices[t];
+      let priceHtml;
+      if (p) {
+        const dirClass = p.dir === 'up' ? 'up' : p.dir === 'down' ? 'down' : 'flat';
+        const arrow = p.dir === 'up' ? '▲' : p.dir === 'down' ? '▼' : '';
+        priceHtml = `<div class="wl-price"><div class="wl-price-value">${p.price}</div><div class="wl-price-change ${dirClass}">${arrow} ${p.change}</div></div>`;
+      } else if (priceLoading) {
+        priceHtml = `<div class="wl-price"><div class="wl-price-loading"></div><div class="wl-price-loading" style="width:40px;margin-top:4px"></div></div>`;
+      } else {
+        priceHtml = `<div class="wl-price" style="font-size:10px;color:var(--text-muted)">—</div>`;
+      }
+      return `<div class="wl-item" style="animation-delay:${i*0.05}s">
+        <div class="wl-item-left">
+          <span style="font-size:14px">${flag}</span>
+          <span class="wl-ticker">${t}</span>
+          <span class="wl-name">${s.name}</span>
+        </div>
+        <div class="wl-item-right">
+          ${priceHtml}
+          <button class="wl-remove" onclick="removeStock('${t}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  renderWatchlistNews();
+}
+
+async function fetchPrices() {
+  if (!watchlist.length) return;
+  const key = apiKey || localStorage.getItem('mp_apikey');
+  if (!key) return;
+
+  priceLoading = true;
+  renderWatchlist();
+
+  // Build stock list for query
+  const stockList = watchlist.map(t => {
+    const s = STOCK_DB[t.toUpperCase()] || STOCK_DB[t] || {};
+    return `${t}(${s.name || '?'})`;
+  }).join(', ');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:2000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`다음 주식 종목들의 현재가(또는 최근 종가)와 전일 대비 등락률을 조회해주세요: ${stockList}
+
+반드시 아래 JSON 배열 형식으로만 답해주세요. 다른 텍스트 없이 JSON만 출력하세요.
+[{"code":"005930","price":"73,200","change":"+2.31%","dir":"up"},{"code":"NVDA","price":"$124.50","change":"-1.2%","dir":"down"}]
+dir은 up/down/flat 중 하나입니다. 한국주식은 원화(쉼표 포함), 미국주식은 달러($) 표시해주세요.`}]
+      })
+    });
+    const data = await resp.json();
+    const text = (data.content||[]).filter(i=>i.type==='text').map(i=>i.text).join('');
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const prices = JSON.parse(jsonMatch[0]);
+      prices.forEach(p => {
+        if (p.code) stockPrices[p.code] = { price:p.price, change:p.change, dir:p.dir||'flat' };
+      });
+    }
+  } catch(e) {
+    console.log('Price fetch failed:', e);
+  }
+
+  priceLoading = false;
+  renderWatchlist();
+}
+
+async function addStock(ticker) {
+  let resolved = resolveStock(ticker);
+  // If not found in DB and API key exists, try Claude lookup
+  if (!STOCK_DB[resolved] && !STOCK_DB[resolved.toUpperCase()]) {
+    const apiResolved = await lookupStockByAPI(ticker);
+    if (apiResolved) resolved = apiResolved;
+  }
+  if (!resolved || watchlist.includes(resolved)) return;
+  watchlist.push(resolved);
+  localStorage.setItem('mp_watchlist', JSON.stringify(watchlist));
+  renderWatchlist();
+}
+
+async function addToWatchlist() {
+  const input = document.getElementById('wlInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const items = val.split(/[,]+/).map(t => t.trim()).filter(Boolean);
+  for (const t of items) { await addStock(t); }
+  input.value = '';
+  hideSuggestions();
+}
+
+function removeStock(ticker) {
+  watchlist = watchlist.filter(t => t !== ticker);
+  localStorage.setItem('mp_watchlist', JSON.stringify(watchlist));
+  renderWatchlist();
+}
+
+// ─── Search suggestions for watchlist input ───
+function showSuggestions(query) {
+  const suggestions = getSearchSuggestions(query);
+  let el = document.getElementById('wlSuggestions');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'wlSuggestions';
+    el.style.cssText = 'position:absolute;left:0;right:0;top:100%;background:var(--bg);border:1px solid var(--border);border-radius:0 0 10px 10px;z-index:10;max-height:240px;overflow-y:auto';
+    document.querySelector('.wl-add-bar').style.position = 'relative';
+    document.querySelector('.wl-add-bar').appendChild(el);
+  }
+  if (!suggestions.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = suggestions.map(s => {
+    const flag = s.market === 'kr' ? '🇰🇷' : '🇺🇸';
+    return `<div onclick="addStock('${s.code}');hideSuggestions();document.getElementById('wlInput').value=''" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);transition:background .15s" onmousedown="event.preventDefault()" ontouchstart="this.style.background='rgba(99,102,241,.1)'" ontouchend="this.style.background='transparent'">
+      <span style="font-size:14px">${flag}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text-primary);min-width:65px">${s.code}</span>
+      <span style="font-size:12px;color:var(--text-secondary)">${s.name}</span>
+    </div>`;
+  }).join('');
+}
+
+function hideSuggestions() {
+  const el = document.getElementById('wlSuggestions');
+  if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+}
+
+function renderWatchlistNews() {
+  const section = document.getElementById('wlNewsSection');
+  if (!watchlist.length) { section.innerHTML = ''; return; }
+
+  // Find all news matching watchlist tickers across all dates
+  let matched = [];
+  BRIEFINGS.forEach(b => {
+    [...b.us, ...b.kr].forEach(item => {
+      const hit = item.tickers.some(t => watchlist.includes(t) || watchlist.includes(t.toUpperCase()));
+      if (hit) {
+        const matchedTickers = item.tickers.filter(t => watchlist.includes(t) || watchlist.includes(t.toUpperCase()));
+        matched.push({ ...item, date: b.date, matchedTickers });
+      }
+    });
+  });
+
+  if (!matched.length) {
+    section.innerHTML = `<div class="section-title"><span class="section-emoji">📰</span>내 종목 뉴스</div>
+      <div class="wl-empty" style="padding:24px">관련 뉴스가 없습니다</div>`;
+    return;
+  }
+
+  const signalMap = { buy:{label:'매수',icon:'🟢'}, sell:{label:'매도',icon:'🔴'}, hold:{label:'관망',icon:'🟡'} };
+  section.innerHTML = `<div class="section-title"><span class="section-emoji">📰</span>내 종목 뉴스 <span class="wl-news-badge">${matched.length}건</span></div>` +
+    matched.map((item, i) => {
+      const id = `wl-card-${Date.now()}-${i}`;
+      const sig = signalMap[item.signal] || signalMap.hold;
+      return `
+        <div class="news-card ${item.impact} animate-in delay-${Math.min(i,5)}" onclick="toggleCard('${id}')" style="margin-bottom:10px">
+          <div class="card-meta">
+            <span class="tag">${item.tag}</span>
+            <span class="impact-icon ${item.impact}">${impactIcon(item.impact)}</span>
+            <span style="margin-left:auto"><span class="signal-badge ${item.signal}">${sig.icon} ${sig.label}</span></span>
+          </div>
+          <div class="card-title">${item.title}</div>
+          <div style="margin-top:6px">${item.matchedTickers.map(t=>`<span class="ticker" style="background:rgba(99,102,241,.15);color:var(--accent)">${t}</span>`).join(' ')}</div>
+          <div class="card-detail" id="${id}">
+            <p style="margin-top:4px">${item.summary}</p>
+            <div class="signal-bar">
+              <div class="signal-header">
+                <span class="signal-label">⚡ AI 투자 시그널</span>
+                <span class="signal-badge ${item.signal}">${sig.label}</span>
+              </div>
+              <div class="signal-reasoning">${item.analysis}</div>
+              <div class="signal-confidence">
+                <span>확신도</span>
+                <div class="confidence-bar"><div class="confidence-fill ${item.signal}" style="width:${item.confidence}%"></div></div>
+                <span>${item.confidence}%</span>
+              </div>
+              <div class="signal-disclaimer">※ 투자 참고용이며 매매 권유가 아닙니다</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+// handle enter in watchlist input
+document.addEventListener('DOMContentLoaded', () => {
+  const wlInput = document.getElementById('wlInput');
+  if (wlInput) wlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addToWatchlist(); });
+});
+
+// ─── PWA Install ───
+function checkInstallBanner() {
+  const dismissed = localStorage.getItem('mp_install_dismissed');
+  const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (!dismissed && !isStandalone && /iPhone|iPad/.test(navigator.userAgent)) {
+    document.getElementById('installBanner').classList.add('show');
+  }
+}
+function dismissInstall() {
+  localStorage.setItem('mp_install_dismissed', '1');
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+// ─── Keyboard ───
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('searchModal').classList.contains('open')) {
+    doSearch();
+  }
+});
+
+// ─── Init ───
+// ─── Init ───
+renderContent();
+renderChips();
+checkInstallBanner();
+// Auto-refresh every 5 minutes
+setInterval(() => { refreshFeed(); }, 5*60*1000);
+// Update relative times every minute
+setInterval(() => { updateLastUpdated(); }, 60*1000);
+</script>
+</body>
+</html>
